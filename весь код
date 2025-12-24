@@ -1,0 +1,410 @@
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <cstdlib> //для преобразования строк
+#include <fstream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Record {
+	int month;
+	int year;
+	int hours;
+};
+
+void zadacha1() {
+	string file = "lab6.txt";
+
+	ifstream input(file);
+
+	if (!input.is_open()) {
+		cerr<< "Ошибка открытия файла " << file << endl;
+		return;
+	}
+	
+	Record bestRecord = { -1, -1, -1 };
+
+	while (!input.eof()) {
+		string line;
+		getline(input, line);
+		
+		if (line.empty()) continue;
+
+		int month = stoi(line.substr(0, 2));  // Первые 2 символа — месяц
+		int year = stoi(line.substr(2, 4));   // Следующие 4 символа — год
+		int hours = stoi(line.substr(8));     // Последний элемент — часы занятий
+
+		if (hours > bestRecord.hours ||
+			(hours == bestRecord.hours &&
+				(year > bestRecord.year || (year == bestRecord.year && month > bestRecord.month)))) {
+			bestRecord.month = month;
+			bestRecord.year = year;
+			bestRecord.hours = hours;
+		}
+	}
+	
+	cout << bestRecord.hours << bestRecord.year << bestRecord.month;
+}
+
+void zadacha2() {
+
+}
+
+
+
+
+struct Student {
+	string surname;
+	string name;
+	char grade;
+
+
+	// Объединение для хранения данных в зависимости от класса
+	union Data {
+		short speed_reading;
+		short math_grade;
+		float muni_test_score;
+	} data;
+};
+
+// Функция для ввода данных ученика
+void inputStudentData(Student& student) {
+	cout << "Фамилия: ";
+	cin >> student.surname;;
+	cout << "Имя: ";
+	cin >> student.name;
+	cout << "Класс (1, 2, 3 или 4): ";
+	cin >> student.grade;
+
+
+	switch (student.grade) {
+	case '1':
+		cout << "Скорость чтения (слов/мин): ";
+		cin >> student.data.speed_reading;
+		break;
+	case '2':
+		cout << "Оценка по итоговой контрольной по математике (от 1 до 10): ";
+		cin >> student.data.math_grade;
+		break;
+	case '3':
+		cout << "Балл итогового муниципального теста (от 1 до 100): ";
+		cin >> student.data.muni_test_score;
+		break;
+	case '4':
+		cout << "Балл итогового муниципального теста (от 1 до 100): ";
+		cin >> student.data.muni_test_score;
+		break;
+	default:
+		cerr<< "Некорректный класс!"<<endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+// Сохраняем студента в файл
+void saveToFile(const Student& student, ofstream& file) {
+	if (!file.is_open()) return;
+
+	file << student.surname << "\t" 
+		<< student.name << "\t" 
+		<< student.grade << "\t";
+
+	switch (student.grade) {
+	case '1':
+		file << student.data.speed_reading << endl;
+		break;
+	case '2': case '3':
+		file << student.data.math_grade << endl;
+		break;
+	case '4':
+		file << student.data.muni_test_score << endl;
+	}
+}
+
+// Читаем студентов из файла и выводим на экран
+void printStudentsFromFile(const string filename) {
+	ifstream file(filename);
+	if (!file.is_open()) {
+		cerr<< "Ошибка открытия файла."<<endl;
+		return;
+	}
+
+	cout << "Фамилия\tИмя\tКласс\tДополнительные данные"<< endl;
+	while (!file.eof()) {
+		string surname, name;
+		char grade;
+		short speed_reading, math_grade;
+		float muni_test_score;
+
+		file >> surname >> name >> grade;
+
+		switch (grade) {
+		case '1':
+			file >> speed_reading;
+			cout << surname << "\t" << name << "\t" << grade << "\t" << speed_reading << endl;
+			break;
+		case '2': case '3':
+			file >> math_grade;
+			cout << surname << "\t" << name << "\t" << grade << "\t" << math_grade << endl;
+			break;
+		case '4':
+			file >> muni_test_score;
+			cout << surname << "\t" << name << "\t" << grade << "\t" << muni_test_score << endl;
+			break;
+		}	
+	} file.close();
+}
+
+
+
+// Структура, представляющая книгу
+struct Book {
+	string title;      // Название книги
+	string author;     // Автор книги
+	int publicationYear; // Год публикации книги
+};
+
+// Вектор для хранения коллекции книг
+vector<Book> books;
+
+// Функция для добавления новой книги
+void addBook() {
+	Book newBook;
+	cout << "Введите название книги: ";
+	getline(cin.ignore(), newBook.title); // Получаем строку, игнорируя предыдущий '\n'
+	cout << "Введите автора книги: ";
+	getline(cin, newBook.author);
+	cout << "Введите год издания книги: ";
+	cin >> newBook.publicationYear;
+	cin.ignore(); // Игнорируем оставшийся '\n' после ввода года
+	books.push_back(newBook); // Добавляем новую книгу в вектор
+	cout << "Книга успешно добавлена." << endl;
+}
+
+// Функция для вывода списка всех книг
+void listBooks() {
+	if (books.empty()) {
+		cout << "Нет книг в списке." << endl;
+		return;
+	}
+	cout << "Список книг:" << endl;
+	for (const auto& book : books) {
+		cout << "Название: " << book.title << endl;
+		cout << "Автор: " << book.author << endl;
+		cout << "Год издания: " << book.publicationYear << endl;
+		cout << "-------------------------"<<endl;
+	}
+}
+
+// Функция для поиска книги по автору
+void findByAuthor(string authorName) {
+	bool found = false;
+	for (const auto& book : books) {
+		if (book.author.find(authorName) != string::npos) {
+			cout << "Название: " << book.title << endl;
+			cout << "Автор: " << book.author << endl;
+			cout << "Год издания: " << book.publicationYear << endl;
+			cout << "-------------------------\n";
+			found = true;
+		}
+	}
+	if (!found) {
+		cout << "Ничего не найдено по данному запросу." << endl;
+	}
+}
+
+// Функция для поиска книг по частичному названию
+void findByTitlePart(string partOfTitle) {
+	bool found = false;
+	for (const auto& book : books) {
+		if (book.title.find(partOfTitle) != string::npos) {
+			cout << "Название: " << book.title << endl;
+			cout << "Автор: " << book.author << endl;
+			cout << "Год издания: " << book.publicationYear << endl;
+			cout << "-------------------------\n";
+			found = true;
+		}
+	}
+	if (!found) {
+		cout << "Ничего не найдено по данному запросу." << endl;
+	}
+}
+
+// Функция для редактирования книги
+void editBook() {
+	string oldTitle;
+	cout << "Введите название книги для редактирования: ";
+	getline(cin, oldTitle);
+
+	bool found = false;
+	for (auto& book : books) {
+		if (book.title == oldTitle) {
+			found = true;
+			cout << "Редактируем книгу:\n";
+			cout << "Текущие данные:\n";
+			cout << "Название: " << book.title << endl;
+			cout << "Автор: " << book.author << endl;
+			cout << "Год издания: " << book.publicationYear << endl;
+
+			cout << "Введите новое название (оставьте пустым, чтобы оставить старое): ";
+			string newTitle;
+			getline(cin, newTitle);
+			if (!newTitle.empty()) book.title = newTitle;
+
+			cout << "Введите нового автора (оставьте пустым, чтобы оставить старого): ";
+			string newAuthor;
+			getline(cin, newAuthor);
+			if (!newAuthor.empty()) book.author = newAuthor;
+
+			cout << "Введите новый год издания (оставьте пустым, чтобы оставить старый): ";
+			string newYearStr;
+			getline(cin, newYearStr);
+			if (!newYearStr.empty()) {
+				book.publicationYear = stoi(newYearStr);
+			}
+
+			cout << "Книга обновлена." << endl;
+			break;
+		}
+	}
+	if (!found) {
+		cout << "Книга с таким названием не найдена." << endl;
+	}
+}
+
+// Функция для удаления книги
+void deleteBook() {
+	string titleToDelete;
+	cout << "Введите название книги для удаления: ";
+	getline(cin, titleToDelete);
+
+	bool deleted = false;
+	for (auto it = books.begin(); it != books.end(); ) {
+		if ((*it).title == titleToDelete) {
+			it = books.erase(it); // удаляем книгу и переходим к следующему элементу
+			deleted = true;
+		}
+		else {
+			++it;
+		}
+	}
+	if (deleted) {
+		cout << "Книга удалена." << endl;
+	}
+	else {
+		cout << "Книга с данным названием не найдена." << endl;
+	}
+}
+
+
+
+int main() {
+	setlocale(LC_ALL, "Russian");
+	system("chcp 1251 > nul"); //чтобы русские буквы нормально отображались, а то VS не поддерживает кодировку для строк
+	int vibor;
+	do {
+		cout << "\n\t\tПрошу сделать Ваш выбор:\n\n";
+		cout << "\t1. Задача 1 - Фитнес центр\n";
+		cout << "\t2. Задача 2 - ASCII - коды символов\n";
+		cout << "\t3. Задача 3 - Разделение числа на триады\n";
+	
+		cout << "\n\tВыберите задачу: ";
+		cin >> vibor;
+		while (vibor < 0 || vibor > 3) {
+			cout << "\n\tВведи число от 1 до 3 ;)\n\t";
+			cin >> vibor;
+		}
+		const int N = 5;
+		Student students[N];
+		ofstream output("students.txt");
+		switch (vibor) {
+
+		case 1: zadacha1(); break;
+		case 2: 
+			//const int N = 5; // Количество учеников
+			/*Student students[N];*/
+
+			for (int i = 0; i < N; ++i) {
+				cout << "Введите данные для ученика №" << i + 1 << ": \n";
+				inputStudentData(students[i]);
+			}
+
+			// Записываем данные в файл
+			/*ofstream output("students.txt");*/
+			if (output.is_open()) {
+				for (int i = 0; i < N; ++i) {
+					saveToFile(students[i], output);
+				}
+				output.close();
+			}
+			else {
+				cerr << "Ошибка открытия файла для записи.\n";
+				return EXIT_FAILURE;
+			}
+
+			// Выводим таблицу с содержимым файла
+			printStudentsFromFile("students.txt");
+			break;
+
+		case 3: 
+			int choice;
+			do {
+				cout << "Меню:\n";
+				cout << "1. Добавить книгу\n";
+				cout << "2. Просмотреть список книг\n";
+				cout << "3. Найти книгу по автору\n";
+				cout << "4. Найти книгу по частичному названию\n";
+				cout << "5. Изменить информацию о книге\n";
+				cout << "6. Удалить книгу\n";
+				cout << "0. Выход\n";
+				cout << "Выберите действие: ";
+				cin >> choice;
+				cin.ignore(); // очищаем буфер ввода
+
+				switch (choice) {
+				case 1:
+					addBook();
+					break;
+				case 2:
+					listBooks();
+					break;
+				case 3:
+				{
+					string authorName;
+					cout << "Введите имя автора для поиска: ";
+					getline(cin, authorName);
+					findByAuthor(authorName);
+				}
+				break;
+				case 4:
+				{
+					string partOfTitle;
+					cout << "Введите часть названия книги для поиска: ";
+					getline(cin, partOfTitle);
+					findByTitlePart(partOfTitle);
+				}
+				break;
+				case 5:
+					editBook();
+					break;
+				case 6:
+					deleteBook();
+					break;
+				case 0:
+					cout << "Завершение работы программы." << endl;
+					break;
+				default:
+					cout << "Недопустимый выбор. Попробуйте снова." << endl;
+				}
+			} while (choice != 0);
+			break;
+		case 0: cout << "\n\tДо встречи!\n"; break;
+		}
+		if (vibor != 0) {
+			cout << "\n\tНажмите любую клавишу";
+			cin.ignore();
+			cin.get();
+		}
+	} while (vibor != 0);
+	return 0;
+}
